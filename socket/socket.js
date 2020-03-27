@@ -14,8 +14,8 @@ let sock={
             secureSocket.onMessage(socket);
         });
     },
-    removeUser : (userId)=>{
-        delete users[userId];
+    removeUser : (token)=>{
+        delete socketOpt.getUsers()[token];
     }
 }
 
@@ -27,6 +27,8 @@ let secureSocket={
     onClose : (socket)=>{
         socket.on("disconnect",(data)=>{
             console.log("onClose : ",socket.handshake.query.token);
+            let token=secureSocket.getToken(socket);
+            sock.removeUser(token);
         });
     },
     onMessage : (socket)=>{
@@ -36,8 +38,11 @@ let secureSocket={
         });
     },
     addUser : (socket)=>{
-        let token=socket.handshake.query.token;
+        let token=secureSocket.getToken(socket);
         socketOpt.getUsers()[token]=socket;
+    },
+    getToken : (socket)=>{
+        return socket.handshake.query.token;
     }
 }
 

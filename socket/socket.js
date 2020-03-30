@@ -1,8 +1,7 @@
 const socketIO = require('socket.io'); 
-const socketOpt = require('./socketOperations'); 
-let jsonWebToken=require("jsonwebtoken");
+const socketOpt = require('./socketOperations');
 
-let users={};
+let listeners=[];
 
 let sock={
     createConnection : (server)=>{
@@ -16,6 +15,9 @@ let sock={
     },
     removeUser : (token)=>{
         delete socketOpt.getUsers()[token];
+    },
+    addListener : (obj)=>{
+        listeners.push(obj);
     }
 }
 
@@ -34,7 +36,13 @@ let secureSocket={
     onMessage : (socket)=>{
         socket.on("message",(data)=>{
             console.log("onMessage : ",data);
-            socketOpt.getData(JSON.parse(data));
+            let sockObj=JSON.parse(data);
+            // socketOpt.getData(JSON.parse(data));
+            listeners.forEach(obj=>{
+                if(obj.type === sockObj.data.type){
+                    obj.callback(sockObj);
+                }
+            })
         });
     },
     addUser : (socket)=>{
@@ -45,5 +53,8 @@ let secureSocket={
         return socket.handshake.query.token;
     }
 }
+
+sock.addListener({type : 1, callback : socketOpt.getData});
+sock.addListener({type : 2, callback : socketOpt.showResult});
 
 module.exports=sock;
